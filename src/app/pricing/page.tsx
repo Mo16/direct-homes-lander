@@ -19,7 +19,7 @@ const QUESTIONS = [
   { q: "Can I change plan later?", a: "Any time, from Billing. Upgrades start straight away and are prorated. Downgrades and cancellations take effect when your paid period ends." },
   { q: "What if I move to a smaller plan?", a: "You choose which properties stay active and the rest lock. Locked properties are never deleted, and their tenants can still pay rent, report repairs and message you." },
   { q: "How do staff seats work?", a: "Professional includes 25, the owner’s among them. Extra seats are £50 each, one-off. Free and Advanced are for the owner alone." },
-  { q: "Is VAT included?", a: "VAT on DirectHomes’ prices is still being confirmed before launch, so the prices here are shown before that is settled." },
+  { q: "Is VAT included?", a: "DirectHomes is not VAT-registered, so no VAT is added to these prices." },
 ];
 
 export default function PricingPage() {

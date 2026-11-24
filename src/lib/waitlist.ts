@@ -138,3 +138,32 @@ ${lines.map((l) => `<p style="margin:0 0 16px;line-height:1.55">${escapeHtml(l)}
   });
   if (!res.ok) throw new Error(`Resend email ${res.status}: ${await res.text().catch(() => "")}`);
 }
+
+/* Contact form */
+
+export const hasContactEmail = () => Boolean(env("RESEND_API_KEY"));
+
+/**
+ * A message from the contact page, emailed to the team inbox (CONTACT_TO, hello@ by default) with Reply-To set to the
+ * sender, so answering it is just Reply. Sent from the address the waitlist uses, which Resend has verified.
+ */
+export async function sendContactMessage(m: { name: string; email: string; who: string; topic: string; message: string }): Promise<void> {
+  const to = env("CONTACT_TO") ?? "hello@direct-homes.co.uk";
+  const from = env("WAITLIST_FROM") ?? "DirectHomes <hello@direct-homes.co.uk>";
+  const rows: [string, string][] = [
+    ["From", `${m.name} <${m.email}>`],
+    ["Is a", m.who],
+    ["About", m.topic],
+  ];
+  const html = `<!doctype html><html lang="en-GB"><body style="margin:0;background:#ebebeb;font-family:Outfit,system-ui,-apple-system,Segoe UI,sans-serif;color:#141414">
+<div style="max-width:560px;margin:0 auto;padding:32px 20px"><div style="background:#faf9fb;border-radius:8px;padding:28px">
+${rows.map(([k, v]) => `<p style="margin:0 0 6px;font-size:14px"><span style="color:#67676b">${k}:</span> ${escapeHtml(v)}</p>`).join("")}
+<p style="margin:20px 0 0;line-height:1.55;white-space:pre-wrap">${escapeHtml(m.message)}</p>
+</div></div></body></html>`;
+  const text = [...rows.map(([k, v]) => `${k}: ${v}`), "", m.message].join("\n");
+  const res = await resend("/emails", {
+    method: "POST",
+    body: { from, to: [to], reply_to: m.email, subject: `Contact form: ${m.topic}`, html, text },
+  });
+  if (!res.ok) throw new Error(`Resend contact email ${res.status}: ${await res.text().catch(() => "")}`);
+}

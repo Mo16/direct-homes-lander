@@ -11,7 +11,19 @@ import { LAUNCHED, SIGN_UP, START_LABEL } from "@/lib/links";
  * Every "way in" button on the site. After launch it is a plain link to the app's sign-up; before it (LAUNCHED in
  * lib/links.ts) the same button opens the waitlist form in a dialog, so pages without the hero's form still have one.
  */
-export function StartLink({ className, arrow, children }: { className: string; /** The up-right arrow's size, or none. */ arrow?: number; children?: ReactNode }) {
+export function StartLink({
+  className,
+  arrow,
+  children,
+  href = SIGN_UP,
+}: {
+  className: string;
+  /** The up-right arrow's size, or none. */
+  arrow?: number;
+  children?: ReactNode;
+  /** Where it goes after launch: sign-up, or a plan's checkout (buyLink). */
+  href?: string;
+}) {
   const [open, setOpen] = useState(false);
   const inside = (
     <>
@@ -22,7 +34,7 @@ export function StartLink({ className, arrow, children }: { className: string; /
 
   if (LAUNCHED) {
     return (
-      <a href={SIGN_UP} className={className}>
+      <a href={href} className={className}>
         {inside}
       </a>
     );

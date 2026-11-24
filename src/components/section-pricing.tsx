@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Column } from "./ui";
 import { StartLink } from "./start-link";
+import { buyLink, LAUNCHED } from "@/lib/links";
 import { cn } from "@/lib/utils";
 
 /*
@@ -10,7 +11,7 @@ import { cn } from "@/lib/utils";
  * time, how it is billed and what paying yearly saves, then the app's own comparison rows. One subgrid runs across
  * the cards so every row lines up. The plans are exactly as the web app seeds them
  * (supabase/migrations/20261002000500_billing.sql: names, taglines, prices, entitlements) and the rows are the app's
- * plan comparison (lib/billing/rules.ts). Prices, VAT and the trial are still open decisions in the spec.
+ * plan comparison (lib/billing/rules.ts). Prices and the trial are still open decisions in the spec; no VAT is charged (user decision, 1 Nov 2026).
  */
 
 const PLANS = [
@@ -117,13 +118,17 @@ export function SectionPricing() {
                     </li>
                   ))}
                 </ul>
+                {/* Free signs up; a paid plan goes through the app to Stripe Checkout, billed the way the switch shows. */}
                 <StartLink
                   arrow={17}
+                  href={p.code === "free" ? undefined : buyLink(p.code, yearly ? "year" : "month")}
                   className={cn(
                     "group inline-flex h-11 w-full items-center justify-center gap-2 rounded-control px-5 text-[15px] transition-colors",
                     dark ? "bg-white text-ink hover:bg-white/85" : "bg-surface text-ink hover:bg-white",
                   )}
-                />
+                >
+                  {LAUNCHED && p.code !== "free" ? `Get ${p.name}` : undefined}
+                </StartLink>
               </li>
             );
           })}

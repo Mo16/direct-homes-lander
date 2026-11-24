@@ -441,7 +441,7 @@ export function SectionPlainPlans() {
             </div>
           </div>
         </div>
-        <p className="mt-4 px-1 text-[13px] leading-[1.55] text-muted">Your tenants never pay a fee. Prices, fees and VAT are still being finalised before launch.</p>
+        <p className="mt-4 px-1 text-[13px] leading-[1.55] text-muted">Your tenants never pay a fee. Prices and fees are still being finalised before launch.</p>
       </Column>
     </section>
   );

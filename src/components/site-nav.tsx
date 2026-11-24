@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { motion, useMotionValueEvent, useReducedMotion, useScroll } from "motion/react";
 import {
-  ArrowRight01Icon,
   ArrowUpRight01Icon,
   BookOpen01Icon,
   Building03Icon,
@@ -65,14 +64,6 @@ const MENU_OF: Partial<Record<string, MenuId>> = {
   ...Object.fromEntries(AUDIENCE.map((e) => [PAGES[e.page].href, "audience"])),
   ...Object.fromEntries(RESOURCES.map((e) => [PAGES[e.page].href, "resources"])),
 };
-
-/** Every page, grouped as the bar is, for the phone menu. */
-const PHONE_GROUPS: { title: string; pages: PageKey[] }[] = [
-  { title: "Product", pages: ["features", "rent", "repairs"] },
-  { title: "Who it's for", pages: ["landlords", "managers", "tenants"] },
-  { title: "Resources", pages: ["guides", "services", "about", "contact", "legal"] },
-  { title: "Plans", pages: ["pricing"] },
-];
 
 /** Pages that carry the full product tour, and the tour's anchor on each: there the menu plays a demo in place. */
 const TOUR_AT: Record<string, string> = { "/": "#landlords", "/features": "#tour" };
@@ -254,6 +245,24 @@ export function SiteNav() {
     </li>
   );
 
+  /** One page in the phone sheet: its bare mark and its name, no line of text, so the whole site fits on one screen. */
+  const phoneRow = (key: string, href: string, icon: IconSvgElement, label: string, onClick?: () => void) => (
+    <li key={key}>
+      <Link
+        href={href}
+        aria-current={href === path ? "page" : undefined}
+        onClick={() => {
+          onClick?.();
+          setPhone(false);
+        }}
+        className="flex h-11 items-center gap-3 rounded-[8px] px-2 text-[15.5px] text-ink transition-colors hover:bg-ink/[0.04] aria-[current=page]:bg-ink/[0.06]"
+      >
+        <Icon icon={icon} size={19} className="shrink-0 text-ink/75" />
+        <span className="min-w-0 whitespace-nowrap">{label}</span>
+      </Link>
+    </li>
+  );
+
   return (
     <motion.div
       initial={false}
@@ -274,7 +283,8 @@ export function SiteNav() {
         />
         <Link href="/" className={cn("flex items-center gap-2.5 rounded-control transition-colors duration-300", scrolled || phone ? "text-ink" : "text-white")} aria-label="DirectHomes home">
           <LogoMark className="size-8" />
-          <span className="text-[19px] tracking-[-0.015em] sm:text-[20px]">DirectHomes</span>
+          {/* On the narrowest phones the name gives way so the menu button stays on screen; the mark and its label remain. */}
+          <span className="text-[19px] tracking-[-0.015em] max-[359px]:sr-only sm:text-[20px]">DirectHomes</span>
         </Link>
 
         <ul
@@ -402,37 +412,76 @@ export function SiteNav() {
             transition={{ duration: 0.28, ease: [0.2, 0.8, 0.2, 1] }}
             className="absolute inset-x-0 top-full pt-2 lg:hidden"
           >
-            {/* The pages scroll if the screen is short; Sign in stays on the sheet's foot, whole. */}
+            {/* The same four as the bar: the six parts two by two, the two short lists, then Pricing on its own. Contact
+                and Legal sit quietly on the foot. The pages scroll if the screen is short; the foot stays whole. */}
             <div className={cn("flex max-h-[calc(100svh-96px)] flex-col overflow-hidden", GLASS)}>
-              <div className="grid min-h-0 flex-1 gap-x-2 overflow-y-auto overscroll-contain p-2 sm:grid-cols-2">
-                {PHONE_GROUPS.map((g) => (
-                  <div key={g.title} className="px-3 pt-2.5 pb-1">
-                    <p className="px-1 text-[13px] text-muted">{g.title}</p>
-                    <ul className="mt-1.5">
-                      {g.pages.map((k) => (
-                        <li key={k}>
-                          <Link
-                            href={PAGES[k].href}
-                            onClick={() => setPhone(false)}
-                            aria-current={PAGES[k].href === path ? "page" : undefined}
-                            className={cn("flex h-10 items-center justify-between rounded-[8px] px-1 text-[16.5px] text-ink transition-colors hover:bg-ink/[0.04] aria-[current=page]:bg-ink/[0.06] aria-[current=page]:px-3")}
-                          >
-                            {PAGES[k].label}
-                            <Icon icon={ArrowRight01Icon} size={16} className="text-muted" />
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pt-4 pb-3">
+                <section aria-labelledby={`${menuId}-product`}>
+                  <div className="flex items-baseline justify-between px-2">
+                    <h2 id={`${menuId}-product`} className="text-[13px] text-muted">
+                      Product
+                    </h2>
+                    <Link href={PAGES.features.href} onClick={() => setPhone(false)} className="group flex items-center gap-0.5 text-[13.5px] text-ink">
+                      All features
+                      <Icon icon={ArrowUpRight01Icon} size={14} className="transition-transform duration-200 group-hover:translate-x-px group-hover:-translate-y-px" />
+                    </Link>
                   </div>
-                ))}
+                  <ul className="mt-1.5 grid min-[360px]:grid-cols-2 sm:grid-cols-3">
+                    {PRODUCT.map((p) =>
+                      p.tour === "tax"
+                        ? phoneRow(p.tour, taxHref(path), p.icon, p.label)
+                        : phoneRow(p.tour, productHref(path, p.tour), p.icon, p.label, () => {
+                            if (path in TOUR_AT) window.dispatchEvent(new CustomEvent("tour:pick", { detail: p.tour }));
+                          }),
+                    )}
+                  </ul>
+                </section>
+                <div className="mt-5 grid gap-5 sm:grid-cols-2 sm:gap-2">
+                  {(
+                    [
+                      ["audience", "Who it's for", AUDIENCE],
+                      ["resources", "Resources", RESOURCES],
+                    ] as const
+                  ).map(([id, title, list]) => (
+                    <section key={id} aria-labelledby={`${menuId}-${id}`}>
+                      <h2 id={`${menuId}-${id}`} className="px-2 text-[13px] text-muted">
+                        {title}
+                      </h2>
+                      <ul className="mt-1.5">{list.map((e) => phoneRow(e.page, PAGES[e.page].href, e.icon, PAGES[e.page].label))}</ul>
+                    </section>
+                  ))}
+                </div>
+                {/* Pricing is a page, not a menu, so it is a single row of its own with the one fact people look for. */}
+                <Link
+                  href={PAGES.pricing.href}
+                  onClick={() => setPhone(false)}
+                  aria-current={PAGES.pricing.href === path ? "page" : undefined}
+                  className="mt-5 flex h-12 items-center justify-between rounded-[8px] bg-ink/[0.05] px-3 text-[16px] text-ink transition-colors hover:bg-ink/[0.08] aria-[current=page]:bg-ink/10"
+                >
+                  Pricing
+                  <span className="text-[14px] text-muted">Free for one home</span>
+                </Link>
               </div>
               {LAUNCHED ? (
-                <div className="p-2 pt-0 sm:hidden">
+                <div className="px-3 pb-2 sm:hidden">
                   <a href={SIGN_IN} className="flex h-12 items-center justify-center rounded-[8px] bg-ink/[0.06] text-[15.5px] text-ink transition-colors hover:bg-ink/10">
                     Sign in
                   </a>
                 </div>
               ) : null}
+              <div className="flex h-12 shrink-0 items-center gap-6 bg-ink/[0.035] px-5 text-[14.5px] text-muted">
+                {(["contact", "legal"] as const).map((k) => (
+                  <Link
+                    key={k}
+                    href={PAGES[k].href}
+                    onClick={() => setPhone(false)}
+                    aria-current={PAGES[k].href === path ? "page" : undefined}
+                    className="transition-colors hover:text-ink aria-[current=page]:text-ink"
+                  >
+                    {PAGES[k].label}
+                  </Link>
+                ))}
+              </div>
             </div>
           </motion.div>
         ) : null}

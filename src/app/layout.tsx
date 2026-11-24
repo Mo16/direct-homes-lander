@@ -15,6 +15,9 @@ const outfit = localFont({
 export const metadata: Metadata = {
   title: { default: "DirectHomes: rent, repairs and tenants in one place", template: "%s | DirectHomes" },
   description: "Run every home you let from one place: rent, repairs, certificates and tenants for UK landlords. Free for your tenants, always.",
+  metadataBase: new URL(process.env.SITE_URL ?? "https://direct-homes.co.uk"),
+  // Google Search Console's ownership tag, carried over from the site that was on direct-homes.co.uk before.
+  verification: { google: "FlYywUdTvaGNNOy63BOfqNDk5UQsGOsSkFXLd35KNWw" },
 };
 
 export const viewport: Viewport = {

@@ -1,5 +1,6 @@
 import { appendFile, mkdir } from "node:fs/promises";
 import path from "node:path";
+import { hasContactEmail, sendContactMessage } from "@/lib/waitlist";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const WHO = ["landlord", "tenant", "other"] as const;
@@ -10,8 +11,8 @@ const text = (v: unknown) => (typeof v === "string" ? v.trim() : "");
 
 /**
  * Takes a message from the contact page. The same checks as the form, so a message that skips the page is held to
- * the same rules. For now it only appends a line to data/contact.jsonl beside the app, which works locally but not on
- * a serverless host: point this at a real store (a support ticket in the app, a Supabase table) before launch.
+ * the same rules. It is emailed to the team inbox through Resend (sendContactMessage). Without a Resend key (local
+ * development) it appends a line to data/contact.jsonl instead; a serverless host cannot write files.
  */
 export async function POST(req: Request) {
   const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
@@ -29,6 +30,16 @@ export async function POST(req: Request) {
   if (message.length < 10 || message.length > 5000) errors.message = message.length > 5000 ? "Keep it under 5,000 characters." : "Tell us a little more, at least a sentence.";
   if (Object.keys(errors).length) {
     return Response.json({ error: "Some details need another look.", errors }, { status: 400 });
+  }
+
+  if (hasContactEmail()) {
+    try {
+      await sendContactMessage({ name, email, who, topic, message });
+      return Response.json({ ok: true });
+    } catch (error) {
+      console.error("[contact] not sent", error instanceof Error ? error.message : error);
+      return Response.json({ error: "We couldn't send that just now. Try again in a minute, or email hello@direct-homes.co.uk." }, { status: 502 });
+    }
   }
 
   const dir = path.join(process.cwd(), "data");

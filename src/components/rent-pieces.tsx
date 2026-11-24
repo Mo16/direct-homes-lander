@@ -148,7 +148,7 @@ export function SectionPaymentMoney() {
           </div>
         </div>
         <p className="mt-4 px-1 text-[13px] leading-[1.55] text-muted">
-          Stripe&rsquo;s fees as published: Pay by Bank 0.5% + 20p, at most £5; Direct Debit 1%, at most £4. Card payments are off unless you switch them on. Fees and VAT are still being finalised before launch.
+          Stripe&rsquo;s fees as published: Pay by Bank 0.5% + 20p, at most £5; Direct Debit 1%, at most £4. Card payments are off unless you switch them on. Fees are still being finalised before launch.
         </p>
       </Column>
     </section>

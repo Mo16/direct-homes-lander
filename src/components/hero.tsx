@@ -5,6 +5,8 @@ import { useLayoutEffect, useRef } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { AppWindow, WindowSheets } from "./app-window";
 import { WaitlistForm } from "./waitlist-form";
+import { StartLink } from "./start-link";
+import { LAUNCHED } from "@/lib/links";
 
 /**
  * The first screen: an island of photograph inset from the page on every side, a Georgian terrace under a big sky.
@@ -37,21 +39,24 @@ export function Hero() {
     const above = words.current;
     const space = gap.current;
     if (!photo || !el || !above || !space) return;
-    // On a phone the shrunk desktop screen is short, so it would stop well above the photo's foot with a hard edge.
-    // Instead it is dropped to sit on the foot, and the photo and the window fade out over the same band.
+    // On a phone the shrunk desktop screen is short, so a full-screen photo left a wide empty band above it. Instead
+    // the window sits a set gap under the form and the photo is cut to end just below it; the two fade out together.
     const phone = window.matchMedia("(max-width: 639px)");
     const pin = () => {
       const shot = el.firstElementChild as HTMLElement | null;
       if (phone.matches && shot) {
         const h = shot.offsetHeight;
-        const foot = photo.offsetTop + photo.offsetHeight;
-        const top = Math.max(above.offsetTop + above.offsetHeight + 40, foot - 20 - h);
-        space.style.marginTop = `${top - above.offsetTop - above.offsetHeight}px`;
+        const lift = Math.round(Math.min(120, Math.max(80, window.innerHeight * 0.12)));
+        const top = above.offsetTop + above.offsetHeight + lift;
+        space.style.marginTop = `${lift}px`;
+        photo.style.minHeight = "0px";
+        photo.style.height = `${top + h + 20}px`;
         el.style.height = `${h + 8}px`;
         el.style.maskImage = `linear-gradient(to bottom, #000 ${Math.round(h * 0.3)}px, transparent ${h}px)`;
         photo.style.maskImage = `linear-gradient(to bottom, #000 calc(100% - ${h + 40}px), transparent calc(100% - 20px))`;
       } else {
         for (const s of [el.style, photo.style]) s.removeProperty("mask-image");
+        for (const p of ["height", "min-height"]) photo.style.removeProperty(p);
         space.style.removeProperty("margin-top");
         el.style.removeProperty("height");
         el.style.setProperty("--foot", `${photo.offsetTop + photo.offsetHeight - el.offsetTop}px`);
@@ -95,7 +100,11 @@ export function Hero() {
         <p className="mt-5 max-w-[30rem] text-[clamp(16px,1.35vw,18px)] leading-[1.45] text-balance text-white [text-shadow:0_1px_2px_rgb(24_34_80/0.45),0_0_14px_rgb(24_34_80/0.5)]">
           Rent, repairs, certificates and tenants for UK landlords. Free to start, and always free for your tenants.
         </p>
-        <WaitlistForm className="mt-8" />
+        {LAUNCHED ? (
+          <StartLink arrow={18} className="group mt-8 inline-flex h-12 items-center gap-2 rounded-control bg-ink pr-4 pl-5 text-[15.5px] text-white transition-colors hover:bg-ink-hover" />
+        ) : (
+          <WaitlistForm className="mt-8" />
+        )}
       </div>
 
       {/* The app fades with the photograph: it starts to go once the photo is nearly gone (its own fade runs from 60px
